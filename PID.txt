@@ -1,0 +1,104 @@
+#include <LCD5110_Basic.h>
+LCD5110 myGLCD(8, 9, 10, 11, 12);
+
+extern uint8_t SmallFont[];
+
+int pot = A0, potp = A1, poti = A2, potd = A3, potaci = A3, pottepki = A4;
+double P, I, D;
+int aci;
+double hata, hata2;
+double kp, ki, kd;
+unsigned long son;
+double hatatoplami, sonhata;
+
+
+void setup() {
+  pinMode(1, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+
+  digitalWrite(7, 1);
+  Serial.begin(9600);
+  myGLCD.InitLCD();
+
+}
+
+void loop() {
+
+  unsigned long simdi = millis();
+  double degisim = (double)(simdi - son);
+
+  int deger  = map(analogRead(pot), 0, 1023, 0, 360);
+  int tepkisuresi = map(analogRead(pottepki), 0, 1023, 25, 100);
+  
+  aci = map(analogRead(potaci), 0, 1023, 0, 45);
+  kp = map(analogRead(potp), 0, 1023, 0, 10);
+  ki = map(analogRead(poti), 0, 1023, 0, 10);
+  kd = map(analogRead(potd), 0, 1023, 0, 10);
+  
+  myGLCD.clrScr();
+
+  myGLCD.setFont(SmallFont);
+
+  myGLCD.print("KP=", 3, 5);
+  myGLCD.printNumI(kp , 20, 5);
+
+  myGLCD.print("KI=", 3, 15);
+  myGLCD.printNumI(ki, 20, 15);
+
+  myGLCD.print("KD=", 3, 20);
+  myGLCD.printNumI(kd, 20, 25);
+
+  myGLCD.print("ACI=", 3, 25);
+  myGLCD.printNumI(aci, 20, 25);
+
+
+  myGLCD.print("TEPKI=", 3, 30);
+  myGLCD.printNumI(tepkisuresi, 30, 30);
+
+  hata = (aci - deger);
+
+  double hatatoplami = (hata * degisim);
+  hata2 = (hata - sonhata) / degisim;
+
+  P = hata * kp ;
+
+  I = hatatoplami * ki ;
+
+  D = hata2 * kd ;
+
+  int deger2 = P + I + D;
+
+
+
+
+  Serial.println("deger=");
+  Serial.println(deger);
+  Serial.println("aci");
+  Serial.println(aci);
+
+
+
+
+
+  digitalWrite(1, 1);
+  digitalWrite(2, 0);
+  analogWrite(5, deger2);
+
+  digitalWrite(3, 1);
+  digitalWrite(4, 0);
+  analogWrite(6, deger2);
+
+  delay(tepkisuresi);
+
+  sonhata = hata;
+  son = simdi;
+
+
+
+}
+
